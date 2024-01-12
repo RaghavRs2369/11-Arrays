@@ -80,9 +80,9 @@ const displayMovements = function (movements) {
   });
 };
 
-const calcDisplayBalance = function (movements) {
-  const balance = movements.reduce((acc, cur) => acc + cur, 0);
-  labelBalance.textContent = `${balance} 💶`;
+const calcDisplayBalance = function (acc) {
+   acc.balance = acc.movements.reduce((acc, cur) => acc + cur, 0);
+  labelBalance.textContent = `${acc.balance} 💶`;
 };
 
 const calcDisplaySummary = function (acc) {
@@ -118,12 +118,24 @@ const createUserNames = function (accs) {
 };
 
 createUserNames(accounts);
+const updateUI = function (acc) {
+  // Display movements
+  displayMovements(acc.movements);
+
+  // Display balance
+  calcDisplayBalance(acc);
+
+  // Display summary
+  calcDisplaySummary(acc);
+};
+
+
 
 // Event Handler
 let currentAccount;
 
 btnLogin.addEventListener('click', function (e) {
-  // Prevent Form From Submitting
+  // Prevent form from submitting
   e.preventDefault();
 
   currentAccount = accounts.find(
@@ -132,26 +144,77 @@ btnLogin.addEventListener('click', function (e) {
   console.log(currentAccount);
 
   if (currentAccount?.pin === Number(inputLoginPin.value)) {
-    // Display UI and Message
+    // Display UI and message
     labelWelcome.textContent = `Welcome back, ${
       currentAccount.owner.split(' ')[0]
     }`;
     containerApp.style.opacity = 100;
+
+    // Clear input fields
+    inputLoginUsername.value = inputLoginPin.value = '';
+    inputLoginPin.blur();
+
+    // Update UI
+    updateUI(currentAccount);
+  }
+});
+
+btnTransfer.addEventListener('click', function (e) {
+  e.preventDefault();
+  const amount = Number(inputTransferAmount.value);
+  const receiverAcc = accounts.find(
+    acc => acc.username === inputTransferTo.value
+  );
+  inputTransferAmount.value = inputTransferTo.value = '';
+
+  if (
+    amount > 0 &&
+    receiverAcc &&
+    currentAccount.balance >= amount &&
+    receiverAcc?.username !== currentAccount.username
+  ) {
+    // Doing the transfer
+    currentAccount.movements.push(-amount);
+    receiverAcc.movements.push(amount);
+
+    // Update UI
+    updateUI(currentAccount);
+  }
+});
+
+btnLoan.addEventListener('click', function (e) {
+  e.preventDefault();
+
+  const amount = Number(inputLoanAmount.value);
+
+  if (amount > 0 && currentAccount.movements.some(mov => amount * 0.1)) 
+  {
+    // Add Movement
+    currentAccount.movements.push(amount);
+
+    // Update UI
+    updateUI(currentAccount);
+  }
+  inputLoanAmount.value = " ";
+})
+
+btnClose.addEventListener('click', function(e) {
+  e.preventDefault();
+  
+  if(inputCloseUsername.value === currentAccount.username && Number(inputClosePin.value) === currentAccount.pin) 
+  {
+    const index = accounts.findIndex(acc => acc.username === currentAccount.username);
+    console.log(index);
+
+    // Delete Account
+    accounts.splice(index, 1);
+
+    // Hide UI
+    containerApp.style.opacity = 0;
   }
 
-  // Clear Input Fields
-  inputLoginUsername.value = inputLoginPin.value = '';
-  inputLoginPin.blur();
-
-  // Display Movements
-  displayMovements(currentAccount.movements);
-
-  // Display Balance
-  calcDisplayBalance(currentAccount.movements);
-
-  // Display Summary
-  calcDisplaySummary(currentAccount);
-});
+  inputCloseUsername.value = inputClosePin.value = " ";
+})
 
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
@@ -444,3 +507,23 @@ const avg2 = calcAverageHumanAge([16, 6, 10, 5, 6, 1, 4]);
 console.log("Chaining Challenge",avg1, avg2);
 
 */
+const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
+console.log(movements);
+
+// EQUALITY
+console.log(movements.includes(-130));
+
+// SOME: CONDITION
+console.log(movements.some(mov => mov === -130));
+const anyDeposits = movements.some(mov => mov > 0);
+console.log(anyDeposits);
+
+// EVERY
+console.log(movements.every(mov => mov > 0));
+console.log(account4.movements.every(mov => mov > 0));
+
+// SEPARATE CALLBACK
+const deposit = mov => mov > 0;
+console.log(movements.some(deposit));
+console.log(movements.every(deposit));
+console.log(movements.filter(deposit));
